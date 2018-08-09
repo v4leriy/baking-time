@@ -1,0 +1,29 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false"
+    android:orientation="horizontal"
+    tools:context="com.udacity.bakingtime.ui.RecipeDetailActivity">
+
+    <!--
+    This layout is a two-pane layout for the master/detail flow.
+    -->
+    <fragment
+        android:id="@+id/recipe_steps_fragment"
+        android:name="com.udacity.bakingtime.ui.RecipeStepsFragment"
+        android:layout_width="400dp"
+        android:layout_height="match_parent" />
+
+    <!-- A small divider -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@android:color/darker_gray" />
+
+    <FrameLayout
+        android:id="@+id/step_detail_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
