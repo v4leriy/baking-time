@@ -30,13 +30,18 @@ public class StepDetailActivity extends AppCompatActivity {
         Step step = recipe.steps.get(recipeStepIndex);
         boolean fullScreen = !TextUtils.isEmpty(step.videoURL) && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 
-        StepDetailFragment stepDetailFragment = new StepDetailFragment();
-        stepDetailFragment.setStep(step);
-        stepDetailFragment.setFullScreen(fullScreen);
-
-        // Add the fragment to its container using a FragmentManager and a Transaction
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.step_detail_container, stepDetailFragment).commit();
+        if (savedInstanceState == null) {
+            StepDetailFragment stepDetailFragment = new StepDetailFragment();
+            stepDetailFragment.setStep(step);
+            stepDetailFragment.setFullScreen(fullScreen);
+
+            // Add the fragment to its container using a FragmentManager and a Transaction
+            fragmentManager.beginTransaction().add(R.id.step_detail_container, stepDetailFragment).commit();
+        } else {
+            StepDetailFragment stepDetailFragment = (StepDetailFragment) fragmentManager.findFragmentById(R.id.step_detail_container);
+            stepDetailFragment.setFullScreen(fullScreen);
+        }
 
         if (fullScreen) {
             getSupportActionBar().hide();

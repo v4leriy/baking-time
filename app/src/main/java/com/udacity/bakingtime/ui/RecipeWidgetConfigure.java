@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.google.gson.Gson;
 import com.udacity.bakingtime.R;
-import com.udacity.bakingtime.RecipeWidgetProvider;
+import com.udacity.bakingtime.widget.RecipeWidgetProvider;
 import com.udacity.bakingtime.model.Recipe;
 import com.udacity.bakingtime.model.RecipeListViewModel;
 

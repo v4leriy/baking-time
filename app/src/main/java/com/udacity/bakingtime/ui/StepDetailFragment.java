@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -31,11 +32,15 @@ public class StepDetailFragment extends Fragment {
 
     private static final String TAG = "StepDetailFragment";
     private static final String STEP = "step";
+    private static final String POSITION = "position";
+    private static final String AUTOPLAY = "autoplay";
 
     private boolean fullScreen;
     private Step step;
     private SimpleExoPlayerView playerView;
     private SimpleExoPlayer exoPlayer;
+    private long position;
+    private boolean autoPlay;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the fragment
@@ -53,6 +58,11 @@ public class StepDetailFragment extends Fragment {
         // Load the saved state (the list of images and list index) if there is one
         if (savedInstanceState != null) {
             step = savedInstanceState.getParcelable(STEP);
+            position = savedInstanceState.getLong(POSITION);
+            autoPlay = savedInstanceState.getBoolean(AUTOPLAY);
+        } else {
+            position = 0;
+            autoPlay = true;
         }
 
         View rootView;
@@ -68,21 +78,34 @@ public class StepDetailFragment extends Fragment {
         }
 
         playerView = rootView.findViewById(R.id.player_view);
-        if (TextUtils.isEmpty(step.videoURL)) {
-            playerView.setVisibility(View.GONE);
-        } else {
-            initializePlayer(Uri.parse(step.videoURL));
-        }
 
         return rootView;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (Util.SDK_INT > 23) {
+            initializePlayer();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (Util.SDK_INT <= 23) {
+            initializePlayer();
+        }
+    }
+
     /**
      * Initialize ExoPlayer.
-     * @param mediaUri The URI of the sample to play.
      */
-    private void initializePlayer(Uri mediaUri) {
-        if (exoPlayer == null) {
+    private void initializePlayer() {
+        if (TextUtils.isEmpty(step.videoURL)) {
+            playerView.setVisibility(View.GONE);
+        } else if (exoPlayer == null) {
+            Uri mediaUri = Uri.parse(step.videoURL);
             // Create an instance of the ExoPlayer.
             TrackSelector trackSelector = new DefaultTrackSelector();
             LoadControl loadControl = new DefaultLoadControl();
@@ -97,7 +120,34 @@ public class StepDetailFragment extends Fragment {
             MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
                     getContext(), userAgent), new DefaultExtractorsFactory(), null, null);
             exoPlayer.prepare(mediaSource);
-            exoPlayer.setPlayWhenReady(true);
+            exoPlayer.seekTo(position);
+            exoPlayer.setPlayWhenReady(autoPlay);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (exoPlayer != null) {
+            if (exoPlayer.getPlaybackState() == ExoPlayer.STATE_ENDED) {
+                // avoid seek to end of stream
+                this.position = 0;
+                this.autoPlay = false;
+            } else {
+                this.position = exoPlayer.getCurrentPosition();
+                this.autoPlay = exoPlayer.getPlayWhenReady();
+            }
+        }
+        if (Util.SDK_INT <= 23) {
+            releasePlayer();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (Util.SDK_INT > 23) {
+            releasePlayer();
         }
     }
 
@@ -113,21 +163,13 @@ public class StepDetailFragment extends Fragment {
     }
 
     /**
-     * Release the player when the activity is destroyed.
-     */
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        releasePlayer();
-        //mMediaSession.setActive(false);
-    }
-
-    /**
      * Save the current state of this fragment
      */
     @Override
     public void onSaveInstanceState(Bundle currentState) {
         currentState.putParcelable(STEP, step);
+        currentState.putLong(POSITION, position);
+        currentState.putBoolean(AUTOPLAY, autoPlay);
     }
 
     public Step getStep() {
